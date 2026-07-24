@@ -32,13 +32,17 @@
         }
 
         html {
+            width: 100%;
             min-height: 100%;
+            overflow-x: hidden;
             background: var(--background);
         }
 
         body {
+            width: 100%;
             min-height: 100vh;
             margin: 0;
+            overflow-x: hidden;
             color: var(--text);
             background: var(--background);
             font-family:
@@ -58,12 +62,34 @@
         }
 
         .app {
-            width: min(100%, 760px);
+            width: 100%;
+            max-width: 760px;
+            min-width: 0;
             margin: 0 auto;
             padding:
                 calc(14px + env(safe-area-inset-top))
                 14px
                 calc(36px + env(safe-area-inset-bottom));
+        }
+
+
+        .app,
+        .app > *,
+        .current,
+        .current > *,
+        .metric-grid,
+        .hourly-scroll,
+        .days,
+        .day,
+        .sun-grid,
+        .aqi-layout,
+        .pollutants {
+            min-width: 0;
+            max-width: 100%;
+        }
+
+        img {
+            max-width: 100%;
         }
 
         .top-line {
@@ -323,17 +349,19 @@
 
         .hourly-scroll {
             display: grid;
-            grid-auto-flow: column;
-            grid-auto-columns: minmax(94px, 1fr);
+            grid-template-columns: repeat(
+                auto-fit,
+                minmax(82px, 1fr)
+            );
             gap: 8px;
-            overflow-x: auto;
-            padding-bottom: 5px;
-            scrollbar-width: thin;
-            scrollbar-color: var(--border-strong) transparent;
+            width: 100%;
+            overflow: visible;
+            padding-bottom: 0;
         }
 
         .hour-card {
-            padding: 13px 10px;
+            min-width: 0;
+            padding: 13px 8px;
             border: 1px solid var(--border);
             border-radius: 14px;
             text-align: center;
@@ -376,9 +404,9 @@
         .day {
             display: grid;
             grid-template-columns:
-                minmax(100px, 1fr)
-                45px
-                minmax(110px, 0.8fr);
+                minmax(0, 1fr)
+                42px
+                auto;
             align-items: center;
             gap: 10px;
             min-height: 67px;
@@ -388,12 +416,14 @@
 
         .day-name {
             margin: 0;
+            overflow-wrap: anywhere;
             font-size: 14px;
         }
 
         .day-description {
             display: block;
             margin-top: 4px;
+            overflow-wrap: anywhere;
             color: var(--muted);
             font-size: 11px;
         }
@@ -404,7 +434,9 @@
         }
 
         .day-values {
+            min-width: 0;
             text-align: right;
+            white-space: nowrap;
         }
 
         .day-temp {
@@ -697,7 +729,7 @@
             }
         }
 
-        @media (max-width: 390px) {
+        @media (max-width: 420px) {
             .app {
                 padding-inline: 10px;
             }
@@ -705,17 +737,83 @@
             .page-header {
                 align-items: flex-start;
                 flex-direction: column;
+                gap: 8px;
             }
 
             .updated {
                 text-align: left;
             }
 
+            .current-primary {
+                min-height: 220px;
+            }
+
+            .temperature {
+                font-size: clamp(64px, 25vw, 92px);
+            }
+
+            .metric-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .metric {
+                min-height: 92px;
+                padding: 12px 10px;
+            }
+
+            .metric-value {
+                font-size: 18px;
+                overflow-wrap: anywhere;
+            }
+
+            .hourly-scroll {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+            }
+
             .day {
                 grid-template-columns:
-                    minmax(80px, 1fr)
-                    35px
-                    90px;
+                    minmax(0, 1fr)
+                    36px
+                    auto;
+                gap: 8px;
+                padding: 10px;
+            }
+
+            .day-temp {
+                font-size: 14px;
+            }
+
+            .sun-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .pollutants {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 340px) {
+            .hourly-scroll {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .metric-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .sun-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .day {
+                grid-template-columns:
+                    minmax(0, 1fr)
+                    34px;
+            }
+
+            .day-values {
+                grid-column: 1 / -1;
+                text-align: left;
             }
         }
     </style>
