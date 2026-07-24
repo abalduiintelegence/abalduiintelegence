@@ -9,7 +9,20 @@
     <meta name="theme-color" content="#090909">
     <title>Weather Mini App</title>
 
+    <link
+        rel="stylesheet"
+        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+        crossorigin=""
+    >
+
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <script
+        src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+        crossorigin=""
+    ></script>
 
     <style>
         :root {
@@ -790,6 +803,337 @@
             font-size: 12px;
         }
 
+
+        body.map-expanded {
+            overflow: hidden;
+        }
+
+        .map-card {
+            position: relative;
+            padding: 16px;
+            overflow: hidden;
+        }
+
+        .map-card-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .map-card-title {
+            margin: 0;
+            font-size: 17px;
+            font-weight: 620;
+            letter-spacing: -0.02em;
+        }
+
+        .map-card-subtitle {
+            margin: 4px 0 0;
+            color: var(--muted);
+            font-size: 10px;
+        }
+
+        .map-close {
+            display: none;
+            place-items: center;
+            width: 40px;
+            min-width: 40px;
+            height: 40px;
+            padding: 0;
+            border: 1px solid var(--line);
+            border-radius: 50%;
+            color: var(--text);
+            background: rgba(18, 18, 18, 0.88);
+            cursor: pointer;
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+        }
+
+        .map-close svg {
+            width: 19px;
+            height: 19px;
+        }
+
+        .map-layers {
+            display: flex;
+            gap: 7px;
+            width: 100%;
+            margin-bottom: 10px;
+            overflow-x: auto;
+            padding: 1px 1px 6px;
+            scrollbar-width: none;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .map-layers::-webkit-scrollbar {
+            display: none;
+        }
+
+        .map-layer-button {
+            flex: 0 0 auto;
+            min-height: 34px;
+            padding: 7px 11px;
+            border: 1px solid var(--line);
+            border-radius: 999px;
+            color: var(--muted);
+            background: var(--panel-2);
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            transition:
+                transform 0.18s ease,
+                color 0.18s ease,
+                border-color 0.18s ease,
+                background-color 0.18s ease;
+        }
+
+        .map-layer-button:active {
+            transform: scale(0.96);
+        }
+
+        .map-layer-button[aria-pressed="true"] {
+            color: var(--black);
+            border-color: var(--white);
+            background: var(--white);
+        }
+
+        .map-frame {
+            position: relative;
+            width: 100%;
+            height: 230px;
+            overflow: hidden;
+            border: 1px solid var(--line);
+            border-radius: 17px;
+            background: var(--panel-2);
+        }
+
+        .weather-map {
+            width: 100%;
+            height: 100%;
+            background: #111111;
+        }
+
+        .map-open-overlay {
+            position: absolute;
+            inset: 0;
+            z-index: 700;
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            gap: 12px;
+            width: 100%;
+            padding: 14px;
+            border: 0;
+            color: var(--text);
+            background:
+                linear-gradient(
+                    180deg,
+                    transparent 42%,
+                    rgba(0, 0, 0, 0.78) 100%
+                );
+            text-align: left;
+            cursor: pointer;
+        }
+
+        .map-open-label {
+            display: grid;
+            gap: 3px;
+        }
+
+        .map-open-label strong {
+            font-size: 14px;
+            font-weight: 650;
+        }
+
+        .map-open-label span {
+            color: #cccccc;
+            font-size: 10px;
+        }
+
+        .map-open-icon {
+            display: grid;
+            place-items: center;
+            width: 36px;
+            min-width: 36px;
+            height: 36px;
+            border: 1px solid rgba(255, 255, 255, 0.28);
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.42);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+        }
+
+        .map-open-icon svg {
+            width: 17px;
+            height: 17px;
+        }
+
+        .map-error {
+            position: absolute;
+            inset: auto 10px 10px 10px;
+            z-index: 650;
+            padding: 9px 11px;
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            border-radius: 12px;
+            color: #e6e6e6;
+            background: rgba(0, 0, 0, 0.74);
+            font-size: 10px;
+            text-align: center;
+            pointer-events: none;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        .map-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-top: 10px;
+            color: var(--faint);
+            font-size: 9px;
+        }
+
+        .map-footer span:last-child {
+            text-align: right;
+        }
+
+        .map-card.map-expanded {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            max-width: none;
+            height: 100%;
+            height: 100dvh;
+            margin: 0;
+            padding:
+                calc(12px + env(safe-area-inset-top))
+                12px
+                calc(12px + env(safe-area-inset-bottom));
+            border: 0;
+            border-radius: 0;
+            background: var(--bg);
+            animation: map-expand 0.28s cubic-bezier(.2, .8, .2, 1) both;
+        }
+
+        .map-card.map-expanded .map-card-head {
+            flex: 0 0 auto;
+            margin-bottom: 10px;
+        }
+
+        .map-card.map-expanded .map-close {
+            display: grid;
+        }
+
+        .map-card.map-expanded .map-layers {
+            flex: 0 0 auto;
+        }
+
+        .map-card.map-expanded .map-frame {
+            flex: 1 1 auto;
+            height: auto;
+            min-height: 0;
+            border-radius: 20px;
+        }
+
+        .map-card.map-expanded .map-open-overlay {
+            display: none;
+        }
+
+        .map-card.map-expanded .map-footer {
+            flex: 0 0 auto;
+        }
+
+        .leaflet-container {
+            font-family:
+                Inter,
+                -apple-system,
+                BlinkMacSystemFont,
+                "Segoe UI",
+                sans-serif;
+        }
+
+        .leaflet-tile.base-map-tile {
+            filter:
+                grayscale(1)
+                invert(0.9)
+                contrast(0.92)
+                brightness(0.72);
+        }
+
+        .leaflet-control-attribution {
+            max-width: calc(100% - 12px);
+            color: #b8b8b8 !important;
+            background: rgba(0, 0, 0, 0.58) !important;
+            font-size: 8px !important;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+        }
+
+        .leaflet-control-attribution a {
+            color: #ffffff !important;
+        }
+
+        .leaflet-bar {
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.15) !important;
+            border-radius: 12px !important;
+            box-shadow: none !important;
+        }
+
+        .leaflet-bar a,
+        .leaflet-bar a:hover {
+            color: var(--text) !important;
+            border-bottom-color: rgba(255, 255, 255, 0.12) !important;
+            background: rgba(15, 15, 15, 0.88) !important;
+        }
+
+        .map-card:not(.map-expanded) .leaflet-control-zoom {
+            display: none;
+        }
+
+        .weather-location-marker {
+            width: 14px;
+            height: 14px;
+            border: 3px solid #ffffff;
+            border-radius: 50%;
+            background: #111111;
+            box-shadow:
+                0 0 0 5px rgba(255, 255, 255, 0.17),
+                0 3px 12px rgba(0, 0, 0, 0.45);
+        }
+
+        @keyframes map-expand {
+            from {
+                opacity: 0;
+                transform: scale(0.985);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        @media (max-width: 360px) {
+            .map-frame {
+                height: 210px;
+            }
+
+            .map-card.map-expanded .map-frame {
+                height: auto;
+            }
+
+            .map-card-subtitle {
+                max-width: 210px;
+            }
+        }
+
         .footer {
             padding: 22px 6px 0;
             color: var(--faint);
@@ -1089,6 +1433,132 @@
                 <div id="daily-list" class="forecast"></div>
             </section>
 
+            <section
+                id="weather-map-card"
+                class="panel map-card"
+                aria-label="Карта погоды"
+            >
+                <div class="map-card-head">
+                    <div>
+                        <h2 class="map-card-title">Карта погоды</h2>
+                        <p class="map-card-subtitle">
+                            Текущие слои Weather Maps 1.0
+                        </p>
+                    </div>
+
+                    <button
+                        id="map-close-button"
+                        class="map-close"
+                        type="button"
+                        aria-label="Свернуть карту"
+                        title="Свернуть карту"
+                    >
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <path
+                                d="M6 6l12 12M18 6 6 18"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-linecap="round"
+                                stroke-width="1.9"
+                            />
+                        </svg>
+                    </button>
+                </div>
+
+                <div
+                    id="map-layer-buttons"
+                    class="map-layers"
+                    aria-label="Слой карты"
+                >
+                    <button
+                        class="map-layer-button"
+                        type="button"
+                        data-map-layer="precipitation_new"
+                        aria-pressed="true"
+                    >
+                        Осадки
+                    </button>
+
+                    <button
+                        class="map-layer-button"
+                        type="button"
+                        data-map-layer="clouds_new"
+                        aria-pressed="false"
+                    >
+                        Облака
+                    </button>
+
+                    <button
+                        class="map-layer-button"
+                        type="button"
+                        data-map-layer="temp_new"
+                        aria-pressed="false"
+                    >
+                        Температура
+                    </button>
+
+                    <button
+                        class="map-layer-button"
+                        type="button"
+                        data-map-layer="wind_new"
+                        aria-pressed="false"
+                    >
+                        Ветер
+                    </button>
+
+                    <button
+                        class="map-layer-button"
+                        type="button"
+                        data-map-layer="pressure_new"
+                        aria-pressed="false"
+                    >
+                        Давление
+                    </button>
+                </div>
+
+                <div class="map-frame">
+                    <div
+                        id="weather-map"
+                        class="weather-map"
+                        aria-label="Интерактивная карта погоды"
+                    ></div>
+
+                    <button
+                        id="map-open-button"
+                        class="map-open-overlay"
+                        type="button"
+                        aria-label="Развернуть карту"
+                    >
+                        <span class="map-open-label">
+                            <strong>Открыть интерактивную карту</strong>
+                            <span>Масштабирование и перемещение</span>
+                        </span>
+
+                        <span class="map-open-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24">
+                                <path
+                                    d="M8 3H3v5M16 3h5v5M8 21H3v-5M16 21h5v-5"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="1.8"
+                                />
+                            </svg>
+                        </span>
+                    </button>
+
+                    <div id="map-error" class="map-error hidden">
+                        Слой карты не загрузился. Проверь API-ключ или лимит.
+                    </div>
+                </div>
+
+                <div class="map-footer">
+                    <span id="map-location-label">Точка прогноза</span>
+                    <span>OpenWeather × OpenStreetMap</span>
+                </div>
+            </section>
+
             <section class="panel sun-card" aria-label="Световой день">
                 <div class="sun-card-head">
                     <div class="sun-card-label">
@@ -1289,6 +1759,17 @@
             metrics: document.getElementById("metrics"),
             hourly: document.getElementById("hourly-list"),
             daily: document.getElementById("daily-list"),
+
+            mapCard: document.getElementById("weather-map-card"),
+            weatherMap: document.getElementById("weather-map"),
+            mapOpenButton: document.getElementById("map-open-button"),
+            mapCloseButton:
+                document.getElementById("map-close-button"),
+            mapLayerButtons:
+                document.getElementById("map-layer-buttons"),
+            mapError: document.getElementById("map-error"),
+            mapLocationLabel:
+                document.getElementById("map-location-label"),
 
             sunEventLabel: document.getElementById("sun-event-label"),
             sunEventTime: document.getElementById("sun-event-time"),
@@ -1616,6 +2097,323 @@
             }
 
             return stat;
+        }
+
+        const WEATHER_MAP_LAYERS = {
+            precipitation_new: "Осадки",
+            clouds_new: "Облака",
+            temp_new: "Температура",
+            wind_new: "Ветер",
+            pressure_new: "Давление",
+        };
+
+        let weatherMap = null;
+        let weatherMapOverlay = null;
+        let weatherMapMarker = null;
+        let activeWeatherMapLayer = "precipitation_new";
+        let lastWeatherMapLocation = null;
+        let weatherMapExpanded = false;
+
+        function weatherTileUrl(layer) {
+            return (
+                "https://tile.openweathermap.org/map/"
+                + `${layer}/{z}/{x}/{y}.png`
+                + `?appid=${encodeURIComponent(
+                    OPENWEATHER_API_KEY
+                )}`
+            );
+        }
+
+        function updateMapLayerButtons() {
+            const buttons = elements.mapLayerButtons.querySelectorAll(
+                "[data-map-layer]"
+            );
+
+            buttons.forEach((button) => {
+                button.setAttribute(
+                    "aria-pressed",
+                    String(
+                        button.dataset.mapLayer
+                        === activeWeatherMapLayer
+                    )
+                );
+            });
+        }
+
+        function setWeatherMapLayer(layer) {
+            if (!WEATHER_MAP_LAYERS[layer]) {
+                return;
+            }
+
+            activeWeatherMapLayer = layer;
+            updateMapLayerButtons();
+            elements.mapError.classList.add("hidden");
+
+            if (!weatherMap) {
+                return;
+            }
+
+            if (weatherMapOverlay) {
+                weatherMap.removeLayer(weatherMapOverlay);
+            }
+
+            weatherMapOverlay = L.tileLayer(
+                weatherTileUrl(layer),
+                {
+                    pane: "weatherPane",
+                    opacity: 0.72,
+                    maxZoom: 12,
+                    attribution:
+                        'Weather layer &copy; '
+                        + '<a href="https://openweathermap.org/">'
+                        + "OpenWeather"
+                        + "</a>",
+                }
+            );
+
+            weatherMapOverlay.on("tileerror", () => {
+                elements.mapError.classList.remove("hidden");
+            });
+
+            weatherMapOverlay.on("load", () => {
+                elements.mapError.classList.add("hidden");
+            });
+
+            weatherMapOverlay.addTo(weatherMap);
+        }
+
+        function setCompactMapInteraction() {
+            if (!weatherMap) {
+                return;
+            }
+
+            weatherMap.dragging.disable();
+            weatherMap.touchZoom.disable();
+            weatherMap.doubleClickZoom.disable();
+            weatherMap.scrollWheelZoom.disable();
+            weatherMap.boxZoom.disable();
+            weatherMap.keyboard.disable();
+        }
+
+        function setExpandedMapInteraction() {
+            if (!weatherMap) {
+                return;
+            }
+
+            weatherMap.dragging.enable();
+            weatherMap.touchZoom.enable();
+            weatherMap.doubleClickZoom.enable();
+            weatherMap.scrollWheelZoom.enable();
+            weatherMap.boxZoom.enable();
+            weatherMap.keyboard.enable();
+        }
+
+        function createWeatherMapMarker(location) {
+            const markerIcon = L.divIcon({
+                className: "",
+                html:
+                    '<div class="weather-location-marker" '
+                    + 'aria-hidden="true"></div>',
+                iconSize: [14, 14],
+                iconAnchor: [7, 7],
+            });
+
+            return L.marker(
+                [location.lat, location.lon],
+                {
+                    icon: markerIcon,
+                    keyboard: false,
+                    interactive: false,
+                }
+            );
+        }
+
+        function initializeWeatherMap(location) {
+            lastWeatherMapLocation = location;
+
+            const locationName = [
+                location.name,
+                location.state,
+                location.country,
+            ]
+                .filter(Boolean)
+                .filter(
+                    (value, index, array) =>
+                        array.indexOf(value) === index
+                )
+                .join(", ");
+
+            elements.mapLocationLabel.textContent =
+                locationName || "Точка прогноза";
+
+            if (typeof window.L === "undefined") {
+                elements.mapError.textContent =
+                    "Библиотека карты не загрузилась.";
+                elements.mapError.classList.remove("hidden");
+                return;
+            }
+
+            const center = [location.lat, location.lon];
+
+            if (!weatherMap) {
+                weatherMap = L.map(
+                    elements.weatherMap,
+                    {
+                        zoomControl: false,
+                        attributionControl: true,
+                        minZoom: 2,
+                        maxZoom: 12,
+                        zoomSnap: 0.5,
+                        preferCanvas: true,
+                    }
+                ).setView(center, 7);
+
+                weatherMap.createPane("weatherPane");
+                weatherMap.getPane("weatherPane").style.zIndex = "350";
+                weatherMap.getPane(
+                    "weatherPane"
+                ).style.pointerEvents = "none";
+
+                L.tileLayer(
+                    "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+                    {
+                        maxZoom: 19,
+                        className: "base-map-tile",
+                        attribution:
+                            '&copy; '
+                            + '<a href="https://www.openstreetmap.org/copyright">'
+                            + "OpenStreetMap contributors"
+                            + "</a>",
+                    }
+                ).addTo(weatherMap);
+
+                L.control.zoom({
+                    position: "bottomright",
+                }).addTo(weatherMap);
+
+                weatherMapMarker =
+                    createWeatherMapMarker(location);
+
+                weatherMapMarker.addTo(weatherMap);
+
+                setWeatherMapLayer(activeWeatherMapLayer);
+                setCompactMapInteraction();
+            } else {
+                weatherMap.setView(center, weatherMapExpanded ? 8 : 7);
+
+                if (weatherMapMarker) {
+                    weatherMapMarker.setLatLng(center);
+                } else {
+                    weatherMapMarker =
+                        createWeatherMapMarker(location);
+
+                    weatherMapMarker.addTo(weatherMap);
+                }
+            }
+
+            window.setTimeout(() => {
+                weatherMap?.invalidateSize({
+                    animate: false,
+                });
+            }, 80);
+        }
+
+        function expandWeatherMap() {
+            if (!weatherMap || weatherMapExpanded) {
+                return;
+            }
+
+            weatherMapExpanded = true;
+            document.body.classList.add("map-expanded");
+            elements.mapCard.classList.add("map-expanded");
+            setExpandedMapInteraction();
+
+            try {
+                telegram?.expand();
+            } catch {
+                // Не мешаем карте открыться вне Telegram.
+            }
+
+            window.setTimeout(() => {
+                weatherMap?.invalidateSize({
+                    animate: false,
+                });
+
+                if (lastWeatherMapLocation) {
+                    weatherMap?.setView(
+                        [
+                            lastWeatherMapLocation.lat,
+                            lastWeatherMapLocation.lon,
+                        ],
+                        8
+                    );
+                }
+            }, 300);
+        }
+
+        function collapseWeatherMap() {
+            if (!weatherMapExpanded) {
+                return;
+            }
+
+            weatherMapExpanded = false;
+            document.body.classList.remove("map-expanded");
+            elements.mapCard.classList.remove("map-expanded");
+            setCompactMapInteraction();
+
+            window.setTimeout(() => {
+                weatherMap?.invalidateSize({
+                    animate: false,
+                });
+
+                if (lastWeatherMapLocation) {
+                    weatherMap?.setView(
+                        [
+                            lastWeatherMapLocation.lat,
+                            lastWeatherMapLocation.lon,
+                        ],
+                        7
+                    );
+                }
+            }, 260);
+        }
+
+        function bindWeatherMapControls() {
+            elements.mapOpenButton.addEventListener(
+                "click",
+                expandWeatherMap
+            );
+
+            elements.mapCloseButton.addEventListener(
+                "click",
+                collapseWeatherMap
+            );
+
+            elements.mapLayerButtons.addEventListener(
+                "click",
+                (event) => {
+                    const button = event.target.closest(
+                        "[data-map-layer]"
+                    );
+
+                    if (!button) {
+                        return;
+                    }
+
+                    setWeatherMapLayer(
+                        button.dataset.mapLayer
+                    );
+                }
+            );
+
+            document.addEventListener("keydown", (event) => {
+                if (
+                    event.key === "Escape"
+                    && weatherMapExpanded
+                ) {
+                    collapseWeatherMap();
+                }
+            });
         }
 
         function renderCurrent(current, location) {
@@ -2202,6 +3000,7 @@
                 renderPollution(data.pollution);
 
                 showContent();
+                initializeWeatherMap(location);
             } catch (error) {
                 console.error(error);
 
@@ -2221,6 +3020,7 @@
         elements.refreshButton.addEventListener("click", start);
 
         initializeTelegram();
+        bindWeatherMapControls();
         start();
     </script>
 </body>
