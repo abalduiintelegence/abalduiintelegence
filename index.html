@@ -856,19 +856,110 @@
             height: 19px;
         }
 
+        .map-layer-carousel {
+            display: grid;
+            grid-template-columns: 36px minmax(0, 1fr) 36px;
+            align-items: center;
+            gap: 7px;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+
+        .map-layer-arrow {
+            display: grid;
+            place-items: center;
+            width: 36px;
+            height: 36px;
+            padding: 0;
+            border: 1px solid var(--line);
+            border-radius: 50%;
+            color: var(--text);
+            background: var(--panel-2);
+            cursor: pointer;
+            transition:
+                transform 0.18s ease,
+                opacity 0.18s ease,
+                border-color 0.18s ease,
+                background-color 0.18s ease;
+        }
+
+        .map-layer-arrow svg {
+            width: 17px;
+            height: 17px;
+        }
+
+        .map-layer-arrow:hover:not(:disabled) {
+            border-color: var(--line-strong);
+            background: var(--panel-3);
+        }
+
+        .map-layer-arrow:active:not(:disabled) {
+            transform: scale(0.92);
+        }
+
+        .map-layer-arrow:disabled {
+            cursor: default;
+            opacity: 0.28;
+        }
+
         .map-layers {
             display: flex;
             gap: 7px;
             width: 100%;
-            margin-bottom: 10px;
+            min-width: 0;
             overflow-x: auto;
-            padding: 1px 1px 6px;
-            scrollbar-width: none;
+            overflow-y: hidden;
+            padding: 1px 1px 9px;
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: var(--line-strong) transparent;
+            cursor: grab;
+            overscroll-behavior-inline: contain;
             -webkit-overflow-scrolling: touch;
         }
 
+        .map-layers.is-dragging {
+            cursor: grabbing;
+            user-select: none;
+            scroll-behavior: auto;
+        }
+
         .map-layers::-webkit-scrollbar {
-            display: none;
+            height: 6px;
+        }
+
+        .map-layers::-webkit-scrollbar-track {
+            border-radius: 999px;
+            background: transparent;
+        }
+
+        .map-layers::-webkit-scrollbar-thumb {
+            border-radius: 999px;
+            background: var(--line-strong);
+        }
+
+        .map-layers::-webkit-scrollbar-thumb:hover {
+            background: var(--muted);
+        }
+
+        @media (pointer: coarse) {
+            .map-layer-carousel {
+                grid-template-columns: minmax(0, 1fr);
+            }
+
+            .map-layer-arrow {
+                display: none;
+            }
+
+            .map-layers {
+                padding-bottom: 5px;
+                scrollbar-width: none;
+                cursor: auto;
+            }
+
+            .map-layers::-webkit-scrollbar {
+                display: none;
+            }
         }
 
         .map-layer-button {
@@ -984,6 +1075,77 @@
             pointer-events: none;
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
+        }
+
+        .map-legend {
+            margin-top: 11px;
+            padding: 12px;
+            border: 1px solid var(--line);
+            border-radius: 15px;
+            background: var(--panel-2);
+        }
+
+        .map-legend-head {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .map-legend-head strong {
+            font-size: 13px;
+            font-weight: 650;
+        }
+
+        .map-legend-head span {
+            color: var(--muted);
+            font-size: 10px;
+        }
+
+        .map-legend-description {
+            margin: 5px 0 10px;
+            color: var(--muted);
+            font-size: 10px;
+            line-height: 1.45;
+        }
+
+        .map-legend-scale {
+            width: 100%;
+            height: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 999px;
+            background:
+                linear-gradient(
+                    90deg,
+                    rgba(110, 110, 205, 0.15),
+                    rgb(80, 80, 225),
+                    rgb(20, 20, 255)
+                );
+            box-shadow:
+                inset 0 0 0 1px rgba(0, 0, 0, 0.12);
+        }
+
+        .map-legend-ticks {
+            display: flex;
+            justify-content: space-between;
+            gap: 5px;
+            margin-top: 6px;
+            color: var(--faint);
+            font-family:
+                ui-monospace,
+                SFMono-Regular,
+                Menlo,
+                monospace;
+            font-size: 8px;
+        }
+
+        .map-legend-ticks span {
+            min-width: 0;
+            text-align: center;
+        }
+
+        .map-card.map-expanded .map-legend {
+            flex: 0 0 auto;
         }
 
         .map-footer {
@@ -1465,54 +1627,94 @@
                     </button>
                 </div>
 
-                <div
-                    id="map-layer-buttons"
-                    class="map-layers"
-                    aria-label="Слой карты"
-                >
+                <div class="map-layer-carousel">
                     <button
-                        class="map-layer-button"
+                        id="map-layer-prev"
+                        class="map-layer-arrow"
                         type="button"
-                        data-map-layer="precipitation_new"
-                        aria-pressed="true"
+                        aria-label="Предыдущие слои"
+                        title="Прокрутить влево"
                     >
-                        Осадки
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <path
+                                d="m14 7-5 5 5 5"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="1.9"
+                            />
+                        </svg>
                     </button>
 
-                    <button
-                        class="map-layer-button"
-                        type="button"
-                        data-map-layer="clouds_new"
-                        aria-pressed="false"
+                    <div
+                        id="map-layer-buttons"
+                        class="map-layers"
+                        aria-label="Слой карты"
                     >
-                        Облака
-                    </button>
+                        <button
+                            class="map-layer-button"
+                            type="button"
+                            data-map-layer="precipitation_new"
+                            aria-pressed="true"
+                        >
+                            Осадки
+                        </button>
+
+                        <button
+                            class="map-layer-button"
+                            type="button"
+                            data-map-layer="clouds_new"
+                            aria-pressed="false"
+                        >
+                            Облака
+                        </button>
+
+                        <button
+                            class="map-layer-button"
+                            type="button"
+                            data-map-layer="temp_new"
+                            aria-pressed="false"
+                        >
+                            Температура
+                        </button>
+
+                        <button
+                            class="map-layer-button"
+                            type="button"
+                            data-map-layer="wind_new"
+                            aria-pressed="false"
+                        >
+                            Ветер
+                        </button>
+
+                        <button
+                            class="map-layer-button"
+                            type="button"
+                            data-map-layer="pressure_new"
+                            aria-pressed="false"
+                        >
+                            Давление
+                        </button>
+                    </div>
 
                     <button
-                        class="map-layer-button"
+                        id="map-layer-next"
+                        class="map-layer-arrow"
                         type="button"
-                        data-map-layer="temp_new"
-                        aria-pressed="false"
+                        aria-label="Следующие слои"
+                        title="Прокрутить вправо"
                     >
-                        Температура
-                    </button>
-
-                    <button
-                        class="map-layer-button"
-                        type="button"
-                        data-map-layer="wind_new"
-                        aria-pressed="false"
-                    >
-                        Ветер
-                    </button>
-
-                    <button
-                        class="map-layer-button"
-                        type="button"
-                        data-map-layer="pressure_new"
-                        aria-pressed="false"
-                    >
-                        Давление
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <path
+                                d="m10 7 5 5-5 5"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="1.9"
+                            />
+                        </svg>
                     </button>
                 </div>
 
@@ -1552,6 +1754,32 @@
                         Слой карты не загрузился. Проверь API-ключ или лимит.
                     </div>
                 </div>
+
+                <section
+                    id="map-legend"
+                    class="map-legend"
+                    aria-label="Легенда погодного слоя"
+                >
+                    <div class="map-legend-head">
+                        <strong id="map-legend-title">Осадки</strong>
+                        <span id="map-legend-unit">мм</span>
+                    </div>
+
+                    <p id="map-legend-description" class="map-legend-description">
+                        Чем насыщеннее синий цвет, тем больше осадков.
+                    </p>
+
+                    <div
+                        id="map-legend-scale"
+                        class="map-legend-scale"
+                        aria-hidden="true"
+                    ></div>
+
+                    <div
+                        id="map-legend-ticks"
+                        class="map-legend-ticks"
+                    ></div>
+                </section>
 
                 <div class="map-footer">
                     <span id="map-location-label">Точка прогноза</span>
@@ -1767,9 +1995,23 @@
                 document.getElementById("map-close-button"),
             mapLayerButtons:
                 document.getElementById("map-layer-buttons"),
+            mapLayerPrev:
+                document.getElementById("map-layer-prev"),
+            mapLayerNext:
+                document.getElementById("map-layer-next"),
             mapError: document.getElementById("map-error"),
             mapLocationLabel:
                 document.getElementById("map-location-label"),
+            mapLegendTitle:
+                document.getElementById("map-legend-title"),
+            mapLegendUnit:
+                document.getElementById("map-legend-unit"),
+            mapLegendDescription:
+                document.getElementById("map-legend-description"),
+            mapLegendScale:
+                document.getElementById("map-legend-scale"),
+            mapLegendTicks:
+                document.getElementById("map-legend-ticks"),
 
             sunEventLabel: document.getElementById("sun-event-label"),
             sunEventTime: document.getElementById("sun-event-time"),
@@ -2100,11 +2342,88 @@
         }
 
         const WEATHER_MAP_LAYERS = {
-            precipitation_new: "Осадки",
-            clouds_new: "Облака",
-            temp_new: "Температура",
-            wind_new: "Ветер",
-            pressure_new: "Давление",
+            precipitation_new: {
+                title: "Осадки",
+                unit: "мм",
+                description:
+                    "Синий цвет показывает количество осадков: "
+                    + "чем он темнее и насыщеннее, тем осадков больше.",
+                gradient:
+                    "linear-gradient(90deg, "
+                    + "rgba(110,110,205,0.12) 0%, "
+                    + "rgba(110,110,205,0.35) 24%, "
+                    + "rgb(80,80,225) 68%, "
+                    + "rgb(20,20,255) 100%)",
+                ticks: ["0", "1", "10", "140+"],
+            },
+
+            clouds_new: {
+                title: "Облачность",
+                unit: "%",
+                description:
+                    "Прозрачные области почти без облаков, "
+                    + "белые области означают плотную облачность.",
+                gradient:
+                    "linear-gradient(90deg, "
+                    + "rgba(255,255,255,0.02) 0%, "
+                    + "rgba(252,251,255,0.25) 25%, "
+                    + "rgba(247,247,255,0.55) 50%, "
+                    + "rgba(244,244,255,0.82) 75%, "
+                    + "rgb(240,240,255) 100%)",
+                ticks: ["0", "25", "50", "75", "100"],
+            },
+
+            temp_new: {
+                title: "Температура",
+                unit: "°C",
+                description:
+                    "Фиолетовый и синий означают холод, "
+                    + "зелёный и жёлтый — тепло, оранжевый — жару.",
+                gradient:
+                    "linear-gradient(90deg, "
+                    + "rgb(130,22,146) 0%, "
+                    + "rgb(130,87,219) 16%, "
+                    + "rgb(32,140,236) 32%, "
+                    + "rgb(35,221,221) 50%, "
+                    + "rgb(194,255,40) 66%, "
+                    + "rgb(255,240,40) 80%, "
+                    + "rgb(252,128,20) 100%)",
+                ticks: ["−40", "−20", "0", "10", "20", "30+"],
+            },
+
+            wind_new: {
+                title: "Скорость ветра",
+                unit: "м/с",
+                description:
+                    "Светлые области означают слабый ветер, "
+                    + "тёмно-фиолетовые — очень сильный.",
+                gradient:
+                    "linear-gradient(90deg, "
+                    + "rgba(255,255,255,0.08) 0%, "
+                    + "rgba(238,206,206,0.48) 20%, "
+                    + "rgba(179,100,188,0.76) 45%, "
+                    + "rgba(63,33,59,0.88) 68%, "
+                    + "rgb(70,0,175) 88%, "
+                    + "rgb(13,17,38) 100%)",
+                ticks: ["1", "5", "15", "25", "50", "100+"],
+            },
+
+            pressure_new: {
+                title: "Давление у уровня моря",
+                unit: "гПа",
+                description:
+                    "Синий цвет показывает низкое давление, "
+                    + "зелёный — обычное, красный — высокое.",
+                gradient:
+                    "linear-gradient(90deg, "
+                    + "rgb(0,115,255) 0%, "
+                    + "rgb(75,208,214) 25%, "
+                    + "rgb(176,247,32) 50%, "
+                    + "rgb(240,184,0) 68%, "
+                    + "rgb(251,85,21) 84%, "
+                    + "rgb(198,0,0) 100%)",
+                ticks: ["940", "980", "1010", "1040", "1080"],
+            },
         };
 
         let weatherMap = null;
@@ -2130,14 +2449,63 @@
             );
 
             buttons.forEach((button) => {
+                const active =
+                    button.dataset.mapLayer
+                    === activeWeatherMapLayer;
+
                 button.setAttribute(
                     "aria-pressed",
-                    String(
-                        button.dataset.mapLayer
-                        === activeWeatherMapLayer
-                    )
+                    String(active)
                 );
+
+                if (active) {
+                    button.scrollIntoView({
+                        behavior: "smooth",
+                        block: "nearest",
+                        inline: "nearest",
+                    });
+                }
             });
+        }
+
+        function updateMapLayerArrows() {
+            const scroller = elements.mapLayerButtons;
+            const maximum =
+                scroller.scrollWidth - scroller.clientWidth;
+
+            elements.mapLayerPrev.disabled =
+                scroller.scrollLeft <= 2;
+
+            elements.mapLayerNext.disabled =
+                scroller.scrollLeft >= maximum - 2;
+        }
+
+        function renderMapLegend(layer) {
+            const metadata = WEATHER_MAP_LAYERS[layer];
+
+            if (!metadata) {
+                return;
+            }
+
+            elements.mapLegendTitle.textContent =
+                metadata.title;
+
+            elements.mapLegendUnit.textContent =
+                metadata.unit;
+
+            elements.mapLegendDescription.textContent =
+                metadata.description;
+
+            elements.mapLegendScale.style.background =
+                metadata.gradient;
+
+            const ticks = metadata.ticks.map((value) => {
+                const tick = document.createElement("span");
+                tick.textContent = value;
+                return tick;
+            });
+
+            elements.mapLegendTicks.replaceChildren(...ticks);
         }
 
         function setWeatherMapLayer(layer) {
@@ -2147,6 +2515,7 @@
 
             activeWeatherMapLayer = layer;
             updateMapLayerButtons();
+            renderMapLegend(layer);
             elements.mapError.classList.add("hidden");
 
             if (!weatherMap) {
@@ -2378,7 +2747,161 @@
             }, 260);
         }
 
+        function enableMapLayerDesktopScrolling() {
+            const scroller = elements.mapLayerButtons;
+
+            if (
+                !scroller
+                || scroller.dataset.desktopScrollReady === "1"
+            ) {
+                return;
+            }
+
+            scroller.dataset.desktopScrollReady = "1";
+
+            scroller.addEventListener(
+                "wheel",
+                (event) => {
+                    if (
+                        scroller.scrollWidth
+                        <= scroller.clientWidth
+                    ) {
+                        return;
+                    }
+
+                    const movement =
+                        Math.abs(event.deltaX)
+                        > Math.abs(event.deltaY)
+                            ? event.deltaX
+                            : event.deltaY;
+
+                    if (movement === 0) {
+                        return;
+                    }
+
+                    scroller.scrollLeft += movement;
+                    event.preventDefault();
+                },
+                { passive: false }
+            );
+
+            let dragging = false;
+            let startX = 0;
+            let startScrollLeft = 0;
+
+            scroller.addEventListener(
+                "pointerdown",
+                (event) => {
+                    if (event.pointerType === "touch") {
+                        return;
+                    }
+
+                    dragging = true;
+                    startX = event.clientX;
+                    startScrollLeft = scroller.scrollLeft;
+
+                    scroller.classList.add("is-dragging");
+                    scroller.setPointerCapture(event.pointerId);
+                }
+            );
+
+            scroller.addEventListener(
+                "pointermove",
+                (event) => {
+                    if (!dragging) {
+                        return;
+                    }
+
+                    scroller.scrollLeft =
+                        startScrollLeft
+                        - (event.clientX - startX);
+                }
+            );
+
+            const stopDragging = (event) => {
+                if (!dragging) {
+                    return;
+                }
+
+                dragging = false;
+                scroller.classList.remove("is-dragging");
+
+                if (
+                    event.pointerId !== undefined
+                    && scroller.hasPointerCapture(event.pointerId)
+                ) {
+                    scroller.releasePointerCapture(
+                        event.pointerId
+                    );
+                }
+            };
+
+            scroller.addEventListener(
+                "pointerup",
+                stopDragging
+            );
+
+            scroller.addEventListener(
+                "pointercancel",
+                stopDragging
+            );
+
+            scroller.addEventListener(
+                "lostpointercapture",
+                () => {
+                    dragging = false;
+                    scroller.classList.remove("is-dragging");
+                }
+            );
+
+            scroller.addEventListener(
+                "scroll",
+                updateMapLayerArrows,
+                { passive: true }
+            );
+
+            window.addEventListener(
+                "resize",
+                updateMapLayerArrows
+            );
+
+            updateMapLayerArrows();
+        }
+
         function bindWeatherMapControls() {
+            enableMapLayerDesktopScrolling();
+            renderMapLegend(activeWeatherMapLayer);
+
+            elements.mapLayerPrev.addEventListener(
+                "click",
+                () => {
+                    elements.mapLayerButtons.scrollBy({
+                        left:
+                            -Math.max(
+                                140,
+                                elements.mapLayerButtons.clientWidth
+                                * 0.7
+                            ),
+                        behavior: "smooth",
+                    });
+                }
+            );
+
+            elements.mapLayerNext.addEventListener(
+                "click",
+                () => {
+                    elements.mapLayerButtons.scrollBy({
+                        left:
+                            Math.max(
+                                140,
+                                elements.mapLayerButtons.clientWidth
+                                * 0.7
+                            ),
+                        behavior: "smooth",
+                    });
+                }
+            );
+
             elements.mapOpenButton.addEventListener(
                 "click",
                 expandWeatherMap
@@ -2402,6 +2925,11 @@
 
                     setWeatherMapLayer(
                         button.dataset.mapLayer
+                    );
+
+                    window.setTimeout(
+                        updateMapLayerArrows,
+                        260
                     );
                 }
             );
