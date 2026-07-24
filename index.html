@@ -856,57 +856,12 @@
             height: 19px;
         }
 
-        .map-layer-carousel {
-            display: grid;
-            grid-template-columns: 36px minmax(0, 1fr) 36px;
-            align-items: center;
-            gap: 7px;
-            width: 100%;
-            margin-bottom: 10px;
-        }
-
-        .map-layer-arrow {
-            display: grid;
-            place-items: center;
-            width: 36px;
-            height: 36px;
-            padding: 0;
-            border: 1px solid var(--line);
-            border-radius: 50%;
-            color: var(--text);
-            background: var(--panel-2);
-            cursor: pointer;
-            transition:
-                transform 0.18s ease,
-                opacity 0.18s ease,
-                border-color 0.18s ease,
-                background-color 0.18s ease;
-        }
-
-        .map-layer-arrow svg {
-            width: 17px;
-            height: 17px;
-        }
-
-        .map-layer-arrow:hover:not(:disabled) {
-            border-color: var(--line-strong);
-            background: var(--panel-3);
-        }
-
-        .map-layer-arrow:active:not(:disabled) {
-            transform: scale(0.92);
-        }
-
-        .map-layer-arrow:disabled {
-            cursor: default;
-            opacity: 0.28;
-        }
-
         .map-layers {
             display: flex;
             gap: 7px;
             width: 100%;
             min-width: 0;
+            margin-bottom: 10px;
             overflow-x: auto;
             overflow-y: hidden;
             padding: 1px 1px 9px;
@@ -943,14 +898,6 @@
         }
 
         @media (pointer: coarse) {
-            .map-layer-carousel {
-                grid-template-columns: minmax(0, 1fr);
-            }
-
-            .map-layer-arrow {
-                display: none;
-            }
-
             .map-layers {
                 padding-bottom: 5px;
                 scrollbar-width: none;
@@ -963,7 +910,12 @@
         }
 
         .map-layer-button {
+            position: relative;
+            z-index: 2;
             flex: 0 0 auto;
+            pointer-events: auto;
+            user-select: none;
+            -webkit-user-select: none;
             min-height: 34px;
             padding: 7px 11px;
             border: 1px solid var(--line);
@@ -1627,31 +1579,11 @@
                     </button>
                 </div>
 
-                <div class="map-layer-carousel">
-                    <button
-                        id="map-layer-prev"
-                        class="map-layer-arrow"
-                        type="button"
-                        aria-label="Предыдущие слои"
-                        title="Прокрутить влево"
-                    >
-                        <svg viewBox="0 0 24 24" aria-hidden="true">
-                            <path
-                                d="m14 7-5 5 5 5"
-                                fill="none"
-                                stroke="currentColor"
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="1.9"
-                            />
-                        </svg>
-                    </button>
-
-                    <div
-                        id="map-layer-buttons"
-                        class="map-layers"
-                        aria-label="Слой карты"
-                    >
+                <div
+                    id="map-layer-buttons"
+                    class="map-layers"
+                    aria-label="Слой карты"
+                >
                         <button
                             class="map-layer-button"
                             type="button"
@@ -1695,28 +1627,7 @@
                             aria-pressed="false"
                         >
                             Давление
-                        </button>
-                    </div>
-
-                    <button
-                        id="map-layer-next"
-                        class="map-layer-arrow"
-                        type="button"
-                        aria-label="Следующие слои"
-                        title="Прокрутить вправо"
-                    >
-                        <svg viewBox="0 0 24 24" aria-hidden="true">
-                            <path
-                                d="m10 7 5 5-5 5"
-                                fill="none"
-                                stroke="currentColor"
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="1.9"
-                            />
-                        </svg>
-                    </button>
-                </div>
+                        </button>                    </div>
 
                 <div class="map-frame">
                     <div
@@ -1995,10 +1906,6 @@
                 document.getElementById("map-close-button"),
             mapLayerButtons:
                 document.getElementById("map-layer-buttons"),
-            mapLayerPrev:
-                document.getElementById("map-layer-prev"),
-            mapLayerNext:
-                document.getElementById("map-layer-next"),
             mapError: document.getElementById("map-error"),
             mapLocationLabel:
                 document.getElementById("map-location-label"),
@@ -2468,18 +2375,6 @@
             });
         }
 
-        function updateMapLayerArrows() {
-            const scroller = elements.mapLayerButtons;
-            const maximum =
-                scroller.scrollWidth - scroller.clientWidth;
-
-            elements.mapLayerPrev.disabled =
-                scroller.scrollLeft <= 2;
-
-            elements.mapLayerNext.disabled =
-                scroller.scrollLeft >= maximum - 2;
-        }
-
         function renderMapLegend(layer) {
             const metadata = WEATHER_MAP_LAYERS[layer];
 
@@ -2785,44 +2680,76 @@
                 { passive: false }
             );
 
+            let pointerActive = false;
             let dragging = false;
             let startX = 0;
             let startScrollLeft = 0;
+            let activePointerId = null;
 
             scroller.addEventListener(
                 "pointerdown",
                 (event) => {
-                    if (event.pointerType === "touch") {
+                    const clickedButton = event.target.closest(
+                        ".map-layer-button"
+                    );
+
+                    if (
+                        event.pointerType === "touch"
+                        || event.button !== 0
+                        || clickedButton
+                    ) {
                         return;
                     }
 
-                    dragging = true;
+                    pointerActive = true;
+                    dragging = false;
+                    activePointerId = event.pointerId;
                     startX = event.clientX;
                     startScrollLeft = scroller.scrollLeft;
-
-                    scroller.classList.add("is-dragging");
-                    scroller.setPointerCapture(event.pointerId);
                 }
             );
 
             scroller.addEventListener(
                 "pointermove",
                 (event) => {
-                    if (!dragging) {
+                    if (
+                        !pointerActive
+                        || event.pointerId !== activePointerId
+                    ) {
                         return;
                     }
 
+                    const distance = event.clientX - startX;
+
+                    if (!dragging && Math.abs(distance) < 5) {
+                        return;
+                    }
+
+                    if (!dragging) {
+                        dragging = true;
+                        scroller.classList.add("is-dragging");
+                        scroller.setPointerCapture(event.pointerId);
+                    }
+
                     scroller.scrollLeft =
-                        startScrollLeft
-                        - (event.clientX - startX);
+                        startScrollLeft - distance;
+
+                    event.preventDefault();
                 }
             );
 
             const stopDragging = (event) => {
-                if (!dragging) {
+                if (
+                    !pointerActive
+                    || (
+                        event.pointerId !== undefined
+                        && event.pointerId !== activePointerId
+                    )
+                ) {
                     return;
                 }
 
+                pointerActive = false;
                 dragging = false;
                 scroller.classList.remove("is-dragging");
 
@@ -2834,6 +2761,8 @@
                         event.pointerId
                     );
                 }
+
+                activePointerId = null;
             };
 
             scroller.addEventListener(
@@ -2849,58 +2778,17 @@
             scroller.addEventListener(
                 "lostpointercapture",
                 () => {
+                    pointerActive = false;
                     dragging = false;
+                    activePointerId = null;
                     scroller.classList.remove("is-dragging");
                 }
             );
-
-            scroller.addEventListener(
-                "scroll",
-                updateMapLayerArrows,
-                { passive: true }
-            );
-
-            window.addEventListener(
-                "resize",
-                updateMapLayerArrows
-            );
-
-            updateMapLayerArrows();
         }
 
         function bindWeatherMapControls() {
             enableMapLayerDesktopScrolling();
             renderMapLegend(activeWeatherMapLayer);
-
-            elements.mapLayerPrev.addEventListener(
-                "click",
-                () => {
-                    elements.mapLayerButtons.scrollBy({
-                        left:
-                            -Math.max(
-                                140,
-                                elements.mapLayerButtons.clientWidth
-                                * 0.7
-                            ),
-                        behavior: "smooth",
-                    });
-                }
-            );
-
-            elements.mapLayerNext.addEventListener(
-                "click",
-                () => {
-                    elements.mapLayerButtons.scrollBy({
-                        left:
-                            Math.max(
-                                140,
-                                elements.mapLayerButtons.clientWidth
-                                * 0.7
-                            ),
-                        behavior: "smooth",
-                    });
-                }
-            );
 
             elements.mapOpenButton.addEventListener(
                 "click",
@@ -2916,20 +2804,18 @@
                 "click",
                 (event) => {
                     const button = event.target.closest(
-                        "[data-map-layer]"
+                        ".map-layer-button[data-map-layer]"
                     );
 
-                    if (!button) {
+                    if (
+                        !button
+                        || !elements.mapLayerButtons.contains(button)
+                    ) {
                         return;
                     }
 
                     setWeatherMapLayer(
                         button.dataset.mapLayer
-                    );
-
-                    window.setTimeout(
-                        updateMapLayerArrows,
-                        260
                     );
                 }
             );
