@@ -140,13 +140,61 @@
             line-height: 1;
         }
 
-        .updated {
+        .update-area {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 8px;
             flex: 0 0 auto;
-            margin: 0 0 2px;
+        }
+
+        .updated {
+            margin: 0;
             color: var(--muted);
             font-size: 11px;
             text-align: right;
             white-space: nowrap;
+        }
+
+        .refresh-button {
+            display: grid;
+            place-items: center;
+            width: 34px;
+            min-width: 34px;
+            height: 34px;
+            padding: 0;
+            border: 1px solid var(--line);
+            border-radius: 50%;
+            color: var(--text);
+            background: var(--panel-2);
+            cursor: pointer;
+            transition:
+                transform 0.18s ease,
+                border-color 0.18s ease,
+                background-color 0.18s ease;
+        }
+
+        .refresh-button svg {
+            width: 17px;
+            height: 17px;
+        }
+
+        .refresh-button:hover {
+            border-color: var(--line-strong);
+            background: var(--panel-3);
+        }
+
+        .refresh-button:active {
+            transform: scale(0.93);
+        }
+
+        .refresh-button.refreshing svg {
+            animation: spin 0.7s linear infinite;
+        }
+
+        .refresh-button:disabled {
+            cursor: wait;
+            opacity: 0.65;
         }
 
         .panel {
@@ -363,17 +411,52 @@
             gap: 9px;
             overflow-x: auto;
             overflow-y: hidden;
-            padding: 2px 2px 8px;
+            padding: 2px 2px 12px;
             scroll-snap-type: x mandatory;
             scroll-padding-inline: 2px;
             overscroll-behavior-inline: contain;
             touch-action: pan-x;
             -webkit-overflow-scrolling: touch;
-            scrollbar-width: none;
+            scrollbar-width: thin;
+            scrollbar-color: var(--line-strong) transparent;
+            cursor: grab;
+        }
+
+        .hour-grid.is-dragging {
+            cursor: grabbing;
+            scroll-snap-type: none;
+            user-select: none;
         }
 
         .hour-grid::-webkit-scrollbar {
-            display: none;
+            height: 7px;
+        }
+
+        .hour-grid::-webkit-scrollbar-track {
+            border-radius: 999px;
+            background: transparent;
+        }
+
+        .hour-grid::-webkit-scrollbar-thumb {
+            border: 1px solid var(--panel);
+            border-radius: 999px;
+            background: var(--line-strong);
+        }
+
+        .hour-grid::-webkit-scrollbar-thumb:hover {
+            background: var(--muted);
+        }
+
+        @media (pointer: coarse) {
+            .hour-grid {
+                padding-bottom: 8px;
+                scrollbar-width: none;
+                cursor: auto;
+            }
+
+            .hour-grid::-webkit-scrollbar {
+                display: none;
+            }
         }
 
         .hour {
@@ -840,6 +923,11 @@
                 gap: 6px;
             }
 
+            .update-area {
+                width: 100%;
+                justify-content: space-between;
+            }
+
             .updated {
                 text-align: left;
             }
@@ -926,7 +1014,29 @@
 
         <header class="title-row">
             <h1 id="page-title" class="city-title">Погода</h1>
-            <p id="updated" class="updated"></p>
+
+            <div class="update-area">
+                <p id="updated" class="updated"></p>
+
+                <button
+                    id="refresh-button"
+                    class="refresh-button"
+                    type="button"
+                    aria-label="Обновить погоду"
+                    title="Обновить погоду"
+                >
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path
+                            d="M20 7v5h-5M4 17v-5h5M18.4 9A7 7 0 0 0 6.7 6.7L4 9M5.6 15A7 7 0 0 0 17.3 17.3L20 15"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="1.8"
+                        />
+                    </svg>
+                </button>
+            </div>
         </header>
 
         <section id="loading-card" class="panel loading">
@@ -1080,14 +1190,57 @@
     <script>
         const telegram = window.Telegram?.WebApp;
 
+        const STORAGE_KEYS = {
+            city: "weather-mini-app:city",
+            apiKey: "weather-mini-app:openweather-key",
+        };
+
+        function safeStorageGet(key) {
+            try {
+                return window.localStorage.getItem(key) ?? "";
+            } catch {
+                return "";
+            }
+        }
+
+        function safeStorageSet(key, value) {
+            if (!value) {
+                return;
+            }
+
+            try {
+                window.localStorage.setItem(key, value);
+            } catch {
+                // Страница продолжит работать даже при запрете хранилища.
+            }
+        }
+
         function readParameters() {
-            const parameters = new URLSearchParams(
+            const urlParameters = new URLSearchParams(
                 window.location.search
             );
 
+            const cityFromUrl =
+                urlParameters.get("city")?.trim() ?? "";
+
+            const keyFromUrl =
+                urlParameters.get("key")?.trim() ?? "";
+
+            if (cityFromUrl) {
+                safeStorageSet(STORAGE_KEYS.city, cityFromUrl);
+            }
+
+            if (keyFromUrl) {
+                safeStorageSet(STORAGE_KEYS.apiKey, keyFromUrl);
+            }
+
             return {
-                city: parameters.get("city")?.trim() ?? "",
-                key: parameters.get("key")?.trim() ?? "",
+                city:
+                    cityFromUrl
+                    || safeStorageGet(STORAGE_KEYS.city),
+                key:
+                    keyFromUrl
+                    || safeStorageGet(STORAGE_KEYS.apiKey),
             };
         }
 
@@ -1096,7 +1249,7 @@
         const OPENWEATHER_API_KEY = parameters.key;
 
         function clearKeyFromAddress() {
-            if (!OPENWEATHER_API_KEY) {
+            if (!new URLSearchParams(window.location.search).has("key")) {
                 return;
             }
 
@@ -1124,6 +1277,8 @@
 
             pageTitle: document.getElementById("page-title"),
             updated: document.getElementById("updated"),
+            refreshButton:
+                document.getElementById("refresh-button"),
 
             locationName: document.getElementById("location-name"),
             temperature: document.getElementById("current-temperature"),
@@ -1613,6 +1768,90 @@
             );
         }
 
+        function enableHourlyDesktopScrolling() {
+            const scroller = elements.hourly;
+
+            if (!scroller || scroller.dataset.desktopScrollReady === "1") {
+                return;
+            }
+
+            scroller.dataset.desktopScrollReady = "1";
+
+            scroller.addEventListener(
+                "wheel",
+                (event) => {
+                    const canScroll =
+                        scroller.scrollWidth > scroller.clientWidth;
+
+                    if (!canScroll) {
+                        return;
+                    }
+
+                    const movement =
+                        Math.abs(event.deltaX) > Math.abs(event.deltaY)
+                            ? event.deltaX
+                            : event.deltaY;
+
+                    if (movement === 0) {
+                        return;
+                    }
+
+                    scroller.scrollLeft += movement;
+                    event.preventDefault();
+                },
+                { passive: false }
+            );
+
+            let dragging = false;
+            let startX = 0;
+            let startScrollLeft = 0;
+
+            scroller.addEventListener("pointerdown", (event) => {
+                if (event.pointerType === "touch") {
+                    return;
+                }
+
+                dragging = true;
+                startX = event.clientX;
+                startScrollLeft = scroller.scrollLeft;
+
+                scroller.classList.add("is-dragging");
+                scroller.setPointerCapture(event.pointerId);
+            });
+
+            scroller.addEventListener("pointermove", (event) => {
+                if (!dragging) {
+                    return;
+                }
+
+                const distance = event.clientX - startX;
+                scroller.scrollLeft = startScrollLeft - distance;
+            });
+
+            const stopDragging = (event) => {
+                if (!dragging) {
+                    return;
+                }
+
+                dragging = false;
+                scroller.classList.remove("is-dragging");
+
+                if (
+                    event.pointerId !== undefined
+                    && scroller.hasPointerCapture(event.pointerId)
+                ) {
+                    scroller.releasePointerCapture(event.pointerId);
+                }
+            };
+
+            scroller.addEventListener("pointerup", stopDragging);
+            scroller.addEventListener("pointercancel", stopDragging);
+            scroller.addEventListener("lostpointercapture", () => {
+                dragging = false;
+                scroller.classList.remove("is-dragging");
+            });
+        }
+
         function renderHourly(forecast) {
             const timezoneOffset = forecast.city.timezone;
             const now = Math.floor(Date.now() / 1000);
@@ -1700,6 +1939,8 @@
             });
 
             elements.hourly.replaceChildren(...cards);
+            elements.hourly.scrollLeft = 0;
+            enableHourlyDesktopScrolling();
         }
 
         function aggregateDays(forecast) {
@@ -1921,22 +2162,32 @@
             elements.content.classList.remove("hidden");
         }
 
+        let loadingInProgress = false;
+
         async function start() {
+            if (loadingInProgress) {
+                return;
+            }
+
             if (!OPENWEATHER_API_KEY) {
                 showError(
-                    "В ссылке отсутствует ключ OpenWeather. "
-                    + "Открой приложение через новую кнопку бота."
+                    "Ключ OpenWeather не найден. "
+                    + "Один раз открой приложение через кнопку бота."
                 );
                 return;
             }
 
             if (!REQUESTED_CITY) {
                 showError(
-                    "В ссылке отсутствует город. "
+                    "Город не найден. "
                     + "Используй команду /weather НазваниеГорода."
                 );
                 return;
             }
+
+            loadingInProgress = true;
+            elements.refreshButton.disabled = true;
+            elements.refreshButton.classList.add("refreshing");
 
             elements.pageTitle.textContent = REQUESTED_CITY;
             showLoading();
@@ -1959,10 +2210,15 @@
                         ? error.message
                         : "Произошла неизвестная ошибка."
                 );
+            } finally {
+                loadingInProgress = false;
+                elements.refreshButton.disabled = false;
+                elements.refreshButton.classList.remove("refreshing");
             }
         }
 
         elements.retry.addEventListener("click", start);
+        elements.refreshButton.addEventListener("click", start);
 
         initializeTelegram();
         start();
