@@ -79,32 +79,30 @@
         }
 
         .card,
-        .profile {
-            border: 1px solid var(--border);
-            border-radius: 18px;
-            background: var(--surface);
-        }
-
-        .profile {
+        .greeting {
             display: flex;
             align-items: center;
-            gap: 13px;
-            padding: 14px;
+            gap: 11px;
+            width: fit-content;
+            max-width: 100%;
+            animation: slide-down 0.55s cubic-bezier(.2, .8, .2, 1) both;
         }
 
         .avatar {
             display: grid;
             place-items: center;
-            width: 56px;
-            min-width: 56px;
-            height: 56px;
+            width: 46px;
+            min-width: 46px;
+            height: 46px;
             overflow: hidden;
             border: 1px solid var(--border-strong);
             border-radius: 50%;
             color: var(--black);
             background: var(--white);
-            font-size: 18px;
+            font-size: 15px;
             font-weight: 700;
+            box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.18);
+            animation: avatar-pulse 3s ease-in-out infinite;
         }
 
         .avatar img {
@@ -113,52 +111,15 @@
             object-fit: cover;
         }
 
-        .profile-content {
+        .greeting-text {
             min-width: 0;
-            flex: 1;
-        }
-
-        .profile-name,
-        .profile-username {
+            margin: 0;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
-        }
-
-        .profile-name {
-            margin: 0;
-            font-size: 17px;
-            font-weight: 650;
-        }
-
-        .profile-username {
-            margin: 4px 0 0;
-            color: var(--muted);
-            font-size: 14px;
-        }
-
-        .profile-tags {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 6px;
-            margin-top: 9px;
-        }
-
-        .tag {
-            display: inline-flex;
-            align-items: center;
-            min-height: 25px;
-            padding: 4px 8px;
-            border: 1px solid var(--border);
-            border-radius: 999px;
-            color: var(--muted);
-            background: var(--surface-soft);
-            font-family:
-                ui-monospace,
-                SFMono-Regular,
-                Menlo,
-                monospace;
-            font-size: 11px;
+            font-size: 16px;
+            font-weight: 600;
+            letter-spacing: -0.02em;
         }
 
         .page-header {
@@ -166,21 +127,9 @@
             align-items: flex-end;
             justify-content: space-between;
             gap: 16px;
-            margin: 28px 2px 14px;
+            margin: 24px 2px 14px;
         }
 
-        .eyebrow {
-            margin: 0 0 7px;
-            color: var(--muted);
-            font-family:
-                ui-monospace,
-                SFMono-Regular,
-                Menlo,
-                monospace;
-            font-size: 11px;
-            letter-spacing: 0.14em;
-            text-transform: uppercase;
-        }
 
         .page-title {
             margin: 0;
@@ -565,6 +514,171 @@
             text-align: center;
         }
 
+
+        .page-header {
+            animation: fade-up 0.6s 0.08s cubic-bezier(.2, .8, .2, 1) both;
+        }
+
+        #weather-content > * {
+            animation: fade-up 0.58s cubic-bezier(.2, .8, .2, 1) both;
+        }
+
+        #weather-content > *:nth-child(1) {
+            animation-delay: 0.04s;
+        }
+
+        #weather-content > *:nth-child(2) {
+            animation-delay: 0.10s;
+        }
+
+        #weather-content > *:nth-child(3) {
+            animation-delay: 0.16s;
+        }
+
+        #weather-content > *:nth-child(4) {
+            animation-delay: 0.22s;
+        }
+
+        #weather-content > *:nth-child(5) {
+            animation-delay: 0.28s;
+        }
+
+        .card,
+        .metric,
+        .hour-card,
+        .day,
+        .sun-item,
+        .pollutant {
+            transition:
+                transform 0.22s ease,
+                border-color 0.22s ease,
+                background-color 0.22s ease;
+        }
+
+        .hour-card:active,
+        .day:active,
+        .sun-item:active,
+        .pollutant:active {
+            transform: scale(0.975);
+        }
+
+        .weather-symbol {
+            overflow: hidden;
+            animation: weather-float 3.4s ease-in-out infinite;
+        }
+
+        .weather-symbol img {
+            width: 64px;
+            height: 64px;
+            object-fit: contain;
+            filter: grayscale(1) contrast(1.2);
+            transform: scale(1.18);
+        }
+
+        .hour-icon,
+        .day-icon {
+            display: grid;
+            place-items: center;
+        }
+
+        .hour-icon img {
+            width: 46px;
+            height: 46px;
+            object-fit: contain;
+            filter: grayscale(1) contrast(1.15);
+        }
+
+        .day-icon img {
+            width: 44px;
+            height: 44px;
+            object-fit: contain;
+            filter: grayscale(1) contrast(1.15);
+        }
+
+        .temperature {
+            animation: temperature-in 0.75s cubic-bezier(.15, .85, .2, 1) both;
+        }
+
+        @keyframes slide-down {
+            from {
+                opacity: 0;
+                transform: translateY(-12px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fade-up {
+            from {
+                opacity: 0;
+                transform: translateY(16px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes temperature-in {
+            from {
+                opacity: 0;
+                transform: translateY(12px) scale(0.96);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        @keyframes weather-float {
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-5px);
+            }
+        }
+
+        @keyframes avatar-pulse {
+            0%,
+            100% {
+                box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
+            }
+
+            50% {
+                box-shadow: 0 0 0 5px rgba(255, 255, 255, 0.055);
+            }
+        }
+
+        @media (hover: hover) {
+            .hour-card:hover,
+            .day:hover,
+            .sun-item:hover,
+            .pollutant:hover {
+                transform: translateY(-2px);
+                border-color: var(--border-strong);
+                background: #1b1b1b;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *,
+            *::before,
+            *::after {
+                scroll-behavior: auto !important;
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+
         @media (max-width: 620px) {
             .current {
                 grid-template-columns: 1fr;
@@ -603,10 +717,6 @@
                     35px
                     90px;
             }
-
-            .profile-tags .tag:first-child {
-                display: none;
-            }
         }
     </style>
 </head>
@@ -615,37 +725,16 @@
     <main class="app">
         <div class="top-line"></div>
 
-        <section class="profile" aria-label="Профиль Telegram">
+        <section class="greeting" aria-label="Приветствие пользователя">
             <div id="avatar" class="avatar">TG</div>
 
-            <div class="profile-content">
-                <p id="profile-name" class="profile-name">
-                    Пользователь Telegram
-                </p>
-
-                <p id="profile-username" class="profile-username">
-                    Mini App
-                </p>
-
-                <div class="profile-tags">
-                    <span id="profile-id" class="tag">
-                        ID: unavailable
-                    </span>
-
-                    <span id="profile-language" class="tag">
-                        LANG: —
-                    </span>
-
-                    <span id="profile-premium" class="tag hidden">
-                        PREMIUM
-                    </span>
-                </div>
-            </div>
+            <p id="greeting-text" class="greeting-text">
+                Привет!
+            </p>
         </section>
 
         <header class="page-header">
             <div>
-                <p class="eyebrow">Monochrome weather</p>
                 <h1 id="page-title" class="page-title">Погода</h1>
             </div>
 
@@ -786,11 +875,7 @@
             content: document.getElementById("weather-content"),
 
             avatar: document.getElementById("avatar"),
-            profileName: document.getElementById("profile-name"),
-            profileUsername: document.getElementById("profile-username"),
-            profileId: document.getElementById("profile-id"),
-            profileLanguage: document.getElementById("profile-language"),
-            profilePremium: document.getElementById("profile-premium"),
+            greetingText: document.getElementById("greeting-text"),
 
             pageTitle: document.getElementById("page-title"),
             updated: document.getElementById("updated"),
@@ -859,40 +944,19 @@
         }
 
         function renderTelegramProfile(user) {
-            elements.profilePremium.classList.add("hidden");
-
             if (!user) {
                 elements.avatar.textContent = "TG";
-                elements.profileName.textContent = "Открыто вне Telegram";
-                elements.profileUsername.textContent =
-                    "Профиль пользователя недоступен";
-                elements.profileId.textContent = "ID: unavailable";
-                elements.profileLanguage.textContent = "LANG: —";
+                elements.greetingText.textContent = "Привет!";
                 return;
             }
 
-            const fullName = [
-                user.first_name,
-                user.last_name,
-            ]
-                .filter(Boolean)
-                .join(" ");
-
-            elements.profileName.textContent =
-                fullName || "Пользователь Telegram";
-
-            elements.profileUsername.textContent =
+            const displayName =
                 user.username
-                    ? `@${user.username}`
-                    : "username не указан";
+                    ? user.username
+                    : user.first_name || "друг";
 
-            elements.profileId.textContent = `ID: ${user.id}`;
-            elements.profileLanguage.textContent =
-                `LANG: ${user.language_code?.toUpperCase() ?? "—"}`;
-
-            if (user.is_premium) {
-                elements.profilePremium.classList.remove("hidden");
-            }
+            elements.greetingText.textContent =
+                `Привет, ${displayName}`;
 
             elements.avatar.textContent = getInitials(user);
 
@@ -900,7 +964,7 @@
                 const image = document.createElement("img");
 
                 image.src = user.photo_url;
-                image.alt = `Аватар ${fullName || "пользователя"}`;
+                image.alt = `Аватар ${displayName}`;
                 image.referrerPolicy = "no-referrer";
 
                 image.addEventListener(
@@ -1026,18 +1090,42 @@
             };
         }
 
-        function weatherIcon(code) {
-            const group = String(code).charAt(0);
+        function weatherIconUrl(iconCode, size = "2x") {
+            if (!iconCode) {
+                return "";
+            }
 
-            if (code === 800) return "○";
-            if (group === "2") return "ϟ";
-            if (group === "3") return "≋";
-            if (group === "5") return "///";
-            if (group === "6") return "✳";
-            if (group === "7") return "≡";
-            if (group === "8") return "●";
+            const suffix = size ? `@${size}` : "";
 
-            return "—";
+            return (
+                "https://openweathermap.org/img/wn/"
+                + `${iconCode}${suffix}.png`
+            );
+        }
+
+        function createWeatherIcon(iconCode, altText, className = "") {
+            const image = document.createElement("img");
+
+            image.src = weatherIconUrl(iconCode);
+            image.alt = altText || "Погодные условия";
+            image.loading = "lazy";
+            image.decoding = "async";
+
+            if (className) {
+                image.className = className;
+            }
+
+            image.addEventListener(
+                "error",
+                () => {
+                    image.replaceWith(
+                        document.createTextNode("◌")
+                    );
+                },
+                { once: true }
+            );
+
+            return image;
         }
 
         function capitalize(value) {
@@ -1171,8 +1259,12 @@
             elements.currentTemperature.textContent =
                 `${Math.round(current.main.temp)}°`;
 
-            elements.currentIcon.textContent =
-                weatherIcon(condition.id);
+            elements.currentIcon.replaceChildren(
+                createWeatherIcon(
+                    condition.icon,
+                    condition.description || "Текущая погода"
+                )
+            );
 
             elements.currentCondition.textContent =
                 capitalize(condition.description);
@@ -1286,8 +1378,13 @@
 
                 const icon = document.createElement("span");
                 icon.className = "hour-icon";
-                icon.textContent = weatherIcon(
-                    item.weather?.[0]?.id
+                const weather = item.weather?.[0] ?? {};
+
+                icon.append(
+                    createWeatherIcon(
+                        weather.icon,
+                        weather.description || "Прогноз"
+                    )
                 );
 
                 const temperature = document.createElement("p");
@@ -1424,8 +1521,15 @@
 
                     const icon = document.createElement("div");
                     icon.className = "day-icon";
-                    icon.textContent = weatherIcon(
-                        day.representative.weather?.[0]?.id
+                    const representativeWeather =
+                        day.representative.weather?.[0] ?? {};
+
+                    icon.append(
+                        createWeatherIcon(
+                            representativeWeather.icon,
+                            representativeWeather.description
+                                || "Прогноз на день"
+                        )
                     );
 
                     const values = document.createElement("div");
